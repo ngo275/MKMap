@@ -37,21 +37,6 @@ class LocationManager: NSObject {
         locationManager.delegate = self
     }
     
-    func locationManager(_ manager: CLLocationManager,
-                                didFailWithError error: Error){
-        if (error as NSError).domain == kCLErrorDomain && (error as NSError).code == CLError.Code.denied.rawValue{
-            //User denied your app access to location information.
-            showTurnOnLocationServiceAlert()
-        }
-    }
-    
-    func locationManager(_ manager: CLLocationManager,
-                                didChangeAuthorization status: CLAuthorizationStatus){
-        if status == .authorizedWhenInUse{
-            //You can resume logging by calling startUpdatingLocation here
-        }
-    }
-    
     func startUpdatingLocation(){
         if CLLocationManager.locationServicesEnabled(){
             locationManager.startUpdatingLocation()
@@ -61,7 +46,7 @@ class LocationManager: NSObject {
         }
     }
     
-    func filterAndAddLocation(_ location: CLLocation) -> Bool{
+    func filterAndAddLocation(_ location: CLLocation) -> Bool {
         let age = -location.timestamp.timeIntervalSinceNow
         
         if age > 10{
@@ -69,12 +54,12 @@ class LocationManager: NSObject {
             return false
         }
         
-        if location.horizontalAccuracy < 0{
+        if location.horizontalAccuracy < 0 {
             print("Latitidue and longitude values are invalid.")
             return false
         }
         
-        if location.horizontalAccuracy > 100{
+        if location.horizontalAccuracy > 100 {
             print("Accuracy is too low.")
             return false
         }
@@ -85,7 +70,7 @@ class LocationManager: NSObject {
         return true
     }
     
-    func showTurnOnLocationServiceAlert(){
+    func showTurnOnLocationServiceAlert() {
         NotificationCenter.default.post(name: Notification.Name(rawValue:"showTurnOnLocationServiceAlert"), object: nil)
     }
     
@@ -98,24 +83,39 @@ class LocationManager: NSObject {
 extension LocationManager: CLLocationManagerDelegate {
     
     func locationManager(_ manager: CLLocationManager,
-                                didUpdateLocations locations: [CLLocation]){
+                                didUpdateLocations locations: [CLLocation]) {
         
-        if let newLocation = locations.last{
+        if let newLocation = locations.last {
             print("(\(newLocation.coordinate.latitude), \(newLocation.coordinate.latitude))")
             
             var locationAdded: Bool
-            if useFilter{
+            if useFilter {
                 locationAdded = filterAndAddLocation(newLocation)
-            }else{
+            } else {
                 locationDataArray.append(newLocation)
                 locationAdded = true
             }
             
             
-            if locationAdded{
+            if locationAdded {
                 notifiyDidUpdateLocation(newLocation: newLocation)
             }
             
+        }
+    }
+    
+    func locationManager(_ manager: CLLocationManager,
+                         didFailWithError error: Error) {
+        if (error as NSError).domain == kCLErrorDomain && (error as NSError).code == CLError.Code.denied.rawValue {
+            //User denied your app access to location information.
+            showTurnOnLocationServiceAlert()
+        }
+    }
+    
+    func locationManager(_ manager: CLLocationManager,
+                         didChangeAuthorization status: CLAuthorizationStatus) {
+        if status == .authorizedWhenInUse {
+            //You can resume logging by calling startUpdatingLocation here
         }
     }
 }

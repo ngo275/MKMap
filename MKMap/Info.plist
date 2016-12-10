@@ -20,6 +20,8 @@
 	<string>1</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>When you use this app, please make sure to turn on this permission!</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
@@ -30,7 +32,7 @@
 	<string>Main</string>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
-		<string>location-service</string>
+		<string>location-services</string>
 		<string>gps</string>
 		<string>armv7</string>
 	</array>

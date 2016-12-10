@@ -26,16 +26,15 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        self.mapView.delegate = self
-        self.mapView.showsUserLocation = false
+        mapView.showsUserLocation = false
         
-        //self.userAnnotationImage = UIImage(named: "user_position_ball")!
+        userAnnotationImage = UIImage(named: "icon")!
         
-        self.accuracyRangeCircle = MKCircle(center: CLLocationCoordinate2D.init(latitude: 41.887, longitude: -87.622), radius: 50)
+        accuracyRangeCircle = MKCircle(center: CLLocationCoordinate2D.init(latitude: 41.887, longitude: -87.622), radius: 50)
         self.mapView.add(self.accuracyRangeCircle!)
         
         
-        self.didInitialZoom = false
+        didInitialZoom = false
         
         
         NotificationCenter.default.addObserver(self, selector: #selector(ViewController.updateMap(_:)), name: Notification.Name(rawValue:"didUpdateLocation"), object: nil)
@@ -81,110 +80,112 @@ class ViewController: UIViewController {
         }
     }
     
-    func updatePolylines(){
+    func updatePolylines() {
         var coordinateArray = [CLLocationCoordinate2D]()
         
-        for loc in LocationManager.shared.locationDataArray{
+        for loc in LocationManager.shared.locationDataArray {
             coordinateArray.append(loc.coordinate)
         }
         
-        self.clearPolyline()
+        clearPolyline()
         
-        self.polyline = MKPolyline(coordinates: coordinateArray, count: coordinateArray.count)
-        self.mapView.add(polyline as! MKOverlay)
-        
+        let polyline = MKPolyline(coordinates: coordinateArray, count: coordinateArray.count) as MKOverlay
+        mapView.add(polyline)
     }
     
-    func clearPolyline(){
-        if self.polyline != nil{
-            self.mapView.remove(self.polyline!)
-            self.polyline = nil
+    func clearPolyline() {
+        if polyline != nil {
+            mapView.remove(polyline!)
+            polyline = nil
         }
     }
     
-    func zoomTo(location: CLLocation){
-        if self.didInitialZoom == false{
+    func zoomTo(location: CLLocation) {
+        if didInitialZoom == false {
             let coordinate = location.coordinate
             let region = MKCoordinateRegionMakeWithDistance(coordinate, 300, 300)
-            self.mapView.setRegion(region, animated: false)
-            self.didInitialZoom = true
+            mapView.setRegion(region, animated: false)
+            didInitialZoom = true
         }
         
-        if self.isBlockingAutoZoom == false{
-            self.isZooming = true
-            self.mapView.setCenter(location.coordinate, animated: true)
+        if isBlockingAutoZoom == false {
+            isZooming = true
+            mapView.setCenter(location.coordinate, animated: true)
         }
         
         var accuracyRadius = 50.0
-        if location.horizontalAccuracy > 0{
+        if location.horizontalAccuracy > 0 {
             if location.horizontalAccuracy > accuracyRadius{
                 accuracyRadius = location.horizontalAccuracy
             }
         }
         
-        self.mapView.remove(self.accuracyRangeCircle!)
-        self.accuracyRangeCircle = MKCircle(center: location.coordinate, radius: accuracyRadius as CLLocationDistance)
-        self.mapView.add(self.accuracyRangeCircle!)
+        mapView.remove(accuracyRangeCircle!)
+        accuracyRangeCircle = MKCircle(center: location.coordinate, radius: accuracyRadius as CLLocationDistance)
+        mapView.add(accuracyRangeCircle!)
         
-        if self.userAnnotation != nil{
-            self.mapView.removeAnnotation(self.userAnnotation!)
+        if userAnnotation != nil {
+            mapView.removeAnnotation(userAnnotation!)
         }
         
-        self.userAnnotation = UserAnnotation(coordinate: location.coordinate, title: "", subtitle: "")
-        self.mapView.addAnnotation(self.userAnnotation!)
+        userAnnotation = UserAnnotation(coordinate: location.coordinate, title: "", subtitle: "")
+        mapView.addAnnotation(userAnnotation!)
     }
 }
 
 extension ViewController: MKMapViewDelegate {
     func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
         
-        if overlay === self.accuracyRangeCircle{
+        if overlay === accuracyRangeCircle {
             let circleRenderer = MKCircleRenderer(circle: overlay as! MKCircle)
             circleRenderer.fillColor = UIColor(white: 0.0, alpha: 0.25)
             circleRenderer.lineWidth = 0
+            
             return circleRenderer
-        }else{
+        } else {
             let polylineRenderer = MKPolylineRenderer(polyline: overlay as! MKPolyline)
             polylineRenderer.strokeColor = UIColor(rgb: 0x1b60fe)
             polylineRenderer.alpha = 0.5
             polylineRenderer.lineWidth = 5.0
+            
             return polylineRenderer
         }
     }
     
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
-        if annotation is MKUserLocation{
+        if annotation is MKUserLocation {
+            
             return nil
-        }else{
+        } else {
             let identifier = "UserAnnotation"
             var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier)
-            if annotationView != nil{
+            if annotationView != nil {
                 annotationView!.annotation = annotation
-            }else{
+            } else {
                 annotationView = MKAnnotationView(annotation: annotation, reuseIdentifier: identifier)
             }
             annotationView!.canShowCallout = false
-            annotationView!.image = self.userAnnotationImage
+            annotationView!.image = userAnnotationImage
             
             return annotationView
         }
     }
     
     func mapView(_ mapView: MKMapView, regionWillChangeAnimated animated: Bool) {
-        if self.isZooming == true{
-            self.isZooming = false
-            self.isBlockingAutoZoom = false
-        }else{
-            self.isBlockingAutoZoom = true
-            if let timer = self.zoomBlockingTimer{
-                if timer.isValid{
+        if isZooming == true {
+            isZooming = false
+            isBlockingAutoZoom = false
+        } else {
+            isBlockingAutoZoom = true
+            if let timer = zoomBlockingTimer {
+                if timer.isValid {
                     timer.invalidate()
                 }
             }
-            self.zoomBlockingTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: false, block: { (Timer) in
-                self.zoomBlockingTimer = nil
-                self.isBlockingAutoZoom = false;
-            })
+            self.zoomBlockingTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: false) { [weak self] (Timer) in
+                self?.zoomBlockingTimer = nil
+                self?.isBlockingAutoZoom = false
+            }
         }
     }
 }
