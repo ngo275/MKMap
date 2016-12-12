@@ -86,7 +86,7 @@ extension LocationManager: CLLocationManagerDelegate {
                                 didUpdateLocations locations: [CLLocation]) {
         
         if let newLocation = locations.last {
-            print("(\(newLocation.coordinate.latitude), \(newLocation.coordinate.latitude))")
+            print("(\(newLocation.coordinate.latitude), \(newLocation.coordinate.latitude), \(newLocation.timestamp))")
             
             var locationAdded: Bool
             if useFilter {

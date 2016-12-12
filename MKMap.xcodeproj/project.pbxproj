@@ -17,6 +17,7 @@
 		257BA4231DFC4B1E001E121A /* MapKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 257BA4221DFC4B1E001E121A /* MapKit.framework */; };
 		257BA4251DFC4BA3001E121A /* UserAnnotation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 257BA4241DFC4BA3001E121A /* UserAnnotation.swift */; };
 		257BA4271DFC4C59001E121A /* UIColor+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 257BA4261DFC4C59001E121A /* UIColor+Hex.swift */; };
+		257BA4781DFEEB39001E121A /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 257BA4771DFEEB39001E121A /* NotificationManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -32,6 +33,7 @@
 		257BA4221DFC4B1E001E121A /* MapKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MapKit.framework; path = System/Library/Frameworks/MapKit.framework; sourceTree = SDKROOT; };
 		257BA4241DFC4BA3001E121A /* UserAnnotation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserAnnotation.swift; sourceTree = "<group>"; };
 		257BA4261DFC4C59001E121A /* UIColor+Hex.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIColor+Hex.swift"; sourceTree = "<group>"; };
+		257BA4771DFEEB39001E121A /* NotificationManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -93,8 +95,8 @@
 				257BA4201DFC452A001E121A /* LocationManager.swift */,
 				257BA4261DFC4C59001E121A /* UIColor+Hex.swift */,
 				257BA4241DFC4BA3001E121A /* UserAnnotation.swift */,
+				257BA4771DFEEB39001E121A /* NotificationManager.swift */,
 			);
-			name = Utilities;
 			path = Utilities;
 			sourceTree = "<group>";
 		};
@@ -176,6 +178,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				257BA4781DFEEB39001E121A /* NotificationManager.swift in Sources */,
 				257BA40D1DFC43EE001E121A /* ViewController.swift in Sources */,
 				257BA4251DFC4BA3001E121A /* UserAnnotation.swift in Sources */,
 				257BA40B1DFC43EE001E121A /* AppDelegate.swift in Sources */,
@@ -346,6 +349,7 @@
 				257BA41B1DFC43EE001E121A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
