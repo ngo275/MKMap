@@ -8,7 +8,7 @@
 
 import UIKit
 import MapKit
-import UserNotifications
+import CoreData
 
 class ViewController: UIViewController {
 
@@ -26,6 +26,9 @@ class ViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        DataManager.shared.read()
+        //DataManager.shared.delete()
         
         mapView.showsUserLocation = false
         
@@ -88,6 +91,10 @@ class ViewController: UIViewController {
             coordinateArray.append(loc.coordinate)
         }
         
+//        if LocationManager.shared.locationDataArray.count == 10 {
+//            DataManager.shared.save()
+//        }
+        
         clearPolyline()
         
         let polyline = MKPolyline(coordinates: coordinateArray, count: coordinateArray.count) as MKOverlay
@@ -95,8 +102,11 @@ class ViewController: UIViewController {
     }
     
     func clearPolyline() {
+        
+        //LocationManager.shared.locationDataArray.forEach(saveData)
         if polyline != nil {
             mapView.remove(polyline!)
+            
             polyline = nil
         }
     }
@@ -132,6 +142,13 @@ class ViewController: UIViewController {
         userAnnotation = UserAnnotation(coordinate: location.coordinate, title: "", subtitle: "")
         mapView.addAnnotation(userAnnotation!)
     }
+    
+    func drawPolylineFromData() {
+        let locsData = DataManager.shared.read()
+        
+        //print(locs)
+    }
+    
 }
 
 extension ViewController: MKMapViewDelegate {
