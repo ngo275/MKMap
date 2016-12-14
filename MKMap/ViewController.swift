@@ -98,7 +98,13 @@ class ViewController: UIViewController {
         clearPolyline()
         
         let polyline = MKPolyline(coordinates: coordinateArray, count: coordinateArray.count) as MKOverlay
+        
+        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(tapGesture(_ :)))
+
+        mapView.addGestureRecognizer(tapGestureRecognizer)
+        
         mapView.add(polyline)
+        
     }
     
     func clearPolyline() {
@@ -149,6 +155,52 @@ class ViewController: UIViewController {
         //print(locs)
     }
     
+    func tapGesture(_ tapGesture: UITapGestureRecognizer) {
+        let tappedMapView = tapGesture.view
+        let tappedPoint = tapGesture.location(in: tappedMapView)
+        let tappedCoordinates = mapView.convert(tappedPoint, toCoordinateFrom: tappedMapView)
+        let point: MKMapPoint = MKMapPointForCoordinate(tappedCoordinates)
+        
+        
+        let touchLocation = tapGesture.location(in: mapView)
+        let locationCoordinate = mapView.convert(touchLocation,toCoordinateFrom: mapView)
+        print(locationCoordinate)
+        
+        // 近くかどうかの判定をして近いならその点にフォーカスする
+        
+    }
+    
+    func distanceOfPoint(pt: MKMapPoint, poly: MKPolyline) -> Double {
+        var distance: Double = Double(MAXFLOAT)
+        var linePoints: [MKMapPoint] = []
+        var polyPoints = UnsafeMutablePointer<MKMapPoint>.allocate(capacity: poly.pointCount)
+        for point in UnsafeBufferPointer(start: poly.points(), count: poly.pointCount) {
+            linePoints.append(point)
+            print("point: \(point.x),\(point.y)")
+        }
+        for n in 0...linePoints.count - 2 {
+            let ptA = linePoints[n]
+            let ptB = linePoints[n+1]
+            let xDelta = ptB.x - ptA.x
+            let yDelta = ptB.y - ptA.y
+            if (xDelta == 0.0 && yDelta == 0.0) {
+                // Points must not be equal
+                continue
+            }
+            let u: Double = ((pt.x - ptA.x) * xDelta + (pt.y - ptA.y) * yDelta) / (xDelta * xDelta + yDelta * yDelta)
+            var ptClosest = MKMapPoint()
+            if (u < 0.0) {
+                ptClosest = ptA
+            } else if (u > 1.0) {
+                ptClosest = ptB
+            } else {
+                ptClosest = MKMapPointMake(ptA.x + u * xDelta, ptA.y + u * yDelta);
+            }
+            distance = min(distance, MKMetersBetweenMapPoints(ptClosest, pt))
+        }
+        return distance
+    }
+
 }
 
 extension ViewController: MKMapViewDelegate {
@@ -206,5 +258,11 @@ extension ViewController: MKMapViewDelegate {
             }
         }
     }
+    
+    func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
+        // annotationをtapしたときよばれる
+    }
+    
+    
 }
 
