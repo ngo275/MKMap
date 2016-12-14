@@ -14,6 +14,7 @@ class ViewController: UIViewController {
 
     
     @IBOutlet weak var mapView: MKMapView!
+    
     var userAnnotationImage: UIImage?
     var userAnnotation: UserAnnotation?
     var accuracyRangeCircle: MKCircle?
@@ -23,6 +24,7 @@ class ViewController: UIViewController {
     var zoomBlockingTimer: Timer?
     var didInitialZoom: Bool?
     
+    var polys: MKPolyline?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -95,11 +97,13 @@ class ViewController: UIViewController {
 //            DataManager.shared.save()
 //        }
         
-        clearPolyline()
+        //clearPolyline()
+        
+        polys = MKPolyline(coordinates: coordinateArray, count: coordinateArray.count)
         
         let polyline = MKPolyline(coordinates: coordinateArray, count: coordinateArray.count) as MKOverlay
         
-        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(tapGesture(_ :)))
+        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(tapGesture(_:)))
 
         mapView.addGestureRecognizer(tapGestureRecognizer)
         
@@ -160,20 +164,24 @@ class ViewController: UIViewController {
         let tappedPoint = tapGesture.location(in: tappedMapView)
         let tappedCoordinates = mapView.convert(tappedPoint, toCoordinateFrom: tappedMapView)
         let point: MKMapPoint = MKMapPointForCoordinate(tappedCoordinates)
-        
+
         
         let touchLocation = tapGesture.location(in: mapView)
         let locationCoordinate = mapView.convert(touchLocation,toCoordinateFrom: mapView)
         print(locationCoordinate)
         
-        // 近くかどうかの判定をして近いならその点にフォーカスする
+        guard let p = polys else { return }
+        
+        let closestPoint = distanceOfPoint(pt: point, poly: p)
+        
+        print(closestPoint ?? "近くのポイントなし")
         
     }
     
-    func distanceOfPoint(pt: MKMapPoint, poly: MKPolyline) -> Double {
-        var distance: Double = Double(MAXFLOAT)
+    func distanceOfPoint(pt: MKMapPoint, poly: MKPolyline) -> CLLocation? {
+        let distance: Double = Double(MAXFLOAT)
         var linePoints: [MKMapPoint] = []
-        var polyPoints = UnsafeMutablePointer<MKMapPoint>.allocate(capacity: poly.pointCount)
+        //var polyPoints = UnsafeMutablePointer<MKMapPoint>.allocate(capacity: poly.pointCount)
         for point in UnsafeBufferPointer(start: poly.points(), count: poly.pointCount) {
             linePoints.append(point)
             print("point: \(point.x),\(point.y)")
@@ -196,9 +204,18 @@ class ViewController: UIViewController {
             } else {
                 ptClosest = MKMapPointMake(ptA.x + u * xDelta, ptA.y + u * yDelta);
             }
-            distance = min(distance, MKMetersBetweenMapPoints(ptClosest, pt))
+            print("Tapped point is: \(MKCoordinateForMapPoint(ptClosest))")
+            
+            let minDistance: Double = 8
+            
+            if min(distance, MKMetersBetweenMapPoints(ptClosest, pt)) <= minDistance {
+                let coordinate = MKCoordinateForMapPoint(ptClosest)
+                
+                return CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+            }
         }
-        return distance
+        
+        return nil
     }
 
 }
@@ -262,7 +279,5 @@ extension ViewController: MKMapViewDelegate {
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
         // annotationをtapしたときよばれる
     }
-    
-    
 }
 
