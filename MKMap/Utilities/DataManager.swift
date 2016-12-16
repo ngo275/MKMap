@@ -52,9 +52,9 @@ class DataManager {
         do {
             let fetchResults = try viewContext.fetch(query)
             for result: AnyObject in fetchResults {
-                let lat: Double? = result.value(forKey: "lat") as? Double
-                let lon: Double? = result.value(forKey: "lon") as? Double
-                let date: Date? = result.value(forKey: "date") as? Date
+//                let lat: Double? = result.value(forKey: "lat") as? Double
+//                let lon: Double? = result.value(forKey: "lon") as? Double
+//                let date: Date? = result.value(forKey: "date") as? Date
                 print("----------------\(result)")
                 
             }

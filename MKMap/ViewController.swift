@@ -29,7 +29,10 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        DataManager.shared.read()
+        //mapView.mapType = .satelliteFlyover
+        //mapView.camera.pitch = 50
+
+        //DataManager.shared.read()
         //DataManager.shared.delete()
         
         mapView.showsUserLocation = false
@@ -44,7 +47,7 @@ class ViewController: UIViewController {
         
         
         NotificationCenter.default.addObserver(self, selector: #selector(ViewController.updateMap(_:)), name: Notification.Name(rawValue:"didUpdateLocation"), object: nil)
-        
+        //drawPolylineFromData()
         
         NotificationCenter.default.addObserver(self, selector: #selector(ViewController.showTurnOnLocationServiceAlert(_:)), name: Notification.Name(rawValue:"showTurnOnLocationServiceAlert"), object: nil)
 
@@ -78,7 +81,7 @@ class ViewController: UIViewController {
         if let userInfo = notification.userInfo{
             
             updatePolylines()
-            
+            //mapView.camera.pitch = 50
             if let newLocation = userInfo["location"] as? CLLocation{
                 zoomTo(location: newLocation)
             }
@@ -92,12 +95,12 @@ class ViewController: UIViewController {
         for loc in LocationManager.shared.locationDataArray {
             coordinateArray.append(loc.coordinate)
         }
-        
+        print(LocationManager.shared.locationDataArray)
 //        if LocationManager.shared.locationDataArray.count == 10 {
 //            DataManager.shared.save()
 //        }
         
-        //clearPolyline()
+        clearPolyline()
         
         polys = MKPolyline(coordinates: coordinateArray, count: coordinateArray.count)
         
@@ -156,6 +159,29 @@ class ViewController: UIViewController {
     func drawPolylineFromData() {
         let locsData = DataManager.shared.read()
         
+        guard let locs = locsData else { return }
+        
+        var coordinateArray = [CLLocationCoordinate2D]()
+        
+        for loc in locs {
+            let c = CLLocationCoordinate2D(latitude: loc.lat as! CLLocationDegrees, longitude: loc.lon as! CLLocationDegrees)
+            coordinateArray.append(c)
+        }
+        print(LocationManager.shared.locationDataArray)
+        //        if LocationManager.shared.locationDataArray.count == 10 {
+        //            DataManager.shared.save()
+        //        }
+        
+        //clearPolyline()
+        
+        let polyline = MKPolyline(coordinates: coordinateArray, count: coordinateArray.count)
+        
+        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(tapGesture(_:)))
+        
+        mapView.addGestureRecognizer(tapGestureRecognizer)
+        
+        mapView.add(polyline)
+        
         //print(locs)
     }
     
@@ -186,6 +212,11 @@ class ViewController: UIViewController {
             linePoints.append(point)
             print("point: \(point.x),\(point.y)")
         }
+        
+        if linePoints.count < 3 {
+            return nil
+        }
+        
         for n in 0...linePoints.count - 2 {
             let ptA = linePoints[n]
             let ptB = linePoints[n+1]
