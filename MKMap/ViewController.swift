@@ -8,12 +8,13 @@
 
 import UIKit
 import MapKit
-import UserNotifications
+import CoreData
 
 class ViewController: UIViewController {
 
     
     @IBOutlet weak var mapView: MKMapView!
+    
     var userAnnotationImage: UIImage?
     var userAnnotation: UserAnnotation?
     var accuracyRangeCircle: MKCircle?
@@ -23,9 +24,16 @@ class ViewController: UIViewController {
     var zoomBlockingTimer: Timer?
     var didInitialZoom: Bool?
     
+    var polys: MKPolyline?
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        //mapView.mapType = .satelliteFlyover
+        //mapView.camera.pitch = 50
+
+        //DataManager.shared.read()
+        //DataManager.shared.delete()
         
         mapView.showsUserLocation = false
         
@@ -39,7 +47,7 @@ class ViewController: UIViewController {
         
         
         NotificationCenter.default.addObserver(self, selector: #selector(ViewController.updateMap(_:)), name: Notification.Name(rawValue:"didUpdateLocation"), object: nil)
-        
+        //drawPolylineFromData()
         
         NotificationCenter.default.addObserver(self, selector: #selector(ViewController.showTurnOnLocationServiceAlert(_:)), name: Notification.Name(rawValue:"showTurnOnLocationServiceAlert"), object: nil)
 
@@ -73,7 +81,7 @@ class ViewController: UIViewController {
         if let userInfo = notification.userInfo{
             
             updatePolylines()
-            
+            //mapView.camera.pitch = 50
             if let newLocation = userInfo["location"] as? CLLocation{
                 zoomTo(location: newLocation)
             }
@@ -87,16 +95,31 @@ class ViewController: UIViewController {
         for loc in LocationManager.shared.locationDataArray {
             coordinateArray.append(loc.coordinate)
         }
+        print(LocationManager.shared.locationDataArray)
+//        if LocationManager.shared.locationDataArray.count == 10 {
+//            DataManager.shared.save()
+//        }
         
         clearPolyline()
         
+        polys = MKPolyline(coordinates: coordinateArray, count: coordinateArray.count)
+        
         let polyline = MKPolyline(coordinates: coordinateArray, count: coordinateArray.count) as MKOverlay
+        
+        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(tapGesture(_:)))
+
+        mapView.addGestureRecognizer(tapGestureRecognizer)
+        
         mapView.add(polyline)
+        
     }
     
     func clearPolyline() {
+        
+        //LocationManager.shared.locationDataArray.forEach(saveData)
         if polyline != nil {
             mapView.remove(polyline!)
+            
             polyline = nil
         }
     }
@@ -132,6 +155,100 @@ class ViewController: UIViewController {
         userAnnotation = UserAnnotation(coordinate: location.coordinate, title: "", subtitle: "")
         mapView.addAnnotation(userAnnotation!)
     }
+    
+    func drawPolylineFromData() {
+        let locsData = DataManager.shared.read()
+        
+        guard let locs = locsData else { return }
+        
+        var coordinateArray = [CLLocationCoordinate2D]()
+        
+        for loc in locs {
+            let c = CLLocationCoordinate2D(latitude: loc.lat as! CLLocationDegrees, longitude: loc.lon as! CLLocationDegrees)
+            coordinateArray.append(c)
+        }
+        print(LocationManager.shared.locationDataArray)
+        //        if LocationManager.shared.locationDataArray.count == 10 {
+        //            DataManager.shared.save()
+        //        }
+        
+        //clearPolyline()
+        
+        let polyline = MKPolyline(coordinates: coordinateArray, count: coordinateArray.count)
+        
+        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(tapGesture(_:)))
+        
+        mapView.addGestureRecognizer(tapGestureRecognizer)
+        
+        mapView.add(polyline)
+        
+        //print(locs)
+    }
+    
+    func tapGesture(_ tapGesture: UITapGestureRecognizer) {
+        let tappedMapView = tapGesture.view
+        let tappedPoint = tapGesture.location(in: tappedMapView)
+        let tappedCoordinates = mapView.convert(tappedPoint, toCoordinateFrom: tappedMapView)
+        let point: MKMapPoint = MKMapPointForCoordinate(tappedCoordinates)
+
+        
+        let touchLocation = tapGesture.location(in: mapView)
+        let locationCoordinate = mapView.convert(touchLocation,toCoordinateFrom: mapView)
+        print(locationCoordinate)
+        
+        guard let p = polys else { return }
+        
+        let closestPoint = distanceOfPoint(pt: point, poly: p)
+        
+        print(closestPoint ?? "近くのポイントなし")
+        
+    }
+    
+    func distanceOfPoint(pt: MKMapPoint, poly: MKPolyline) -> CLLocation? {
+        let distance: Double = Double(MAXFLOAT)
+        var linePoints: [MKMapPoint] = []
+        //var polyPoints = UnsafeMutablePointer<MKMapPoint>.allocate(capacity: poly.pointCount)
+        for point in UnsafeBufferPointer(start: poly.points(), count: poly.pointCount) {
+            linePoints.append(point)
+            print("point: \(point.x),\(point.y)")
+        }
+        
+        if linePoints.count < 3 {
+            return nil
+        }
+        
+        for n in 0...linePoints.count - 2 {
+            let ptA = linePoints[n]
+            let ptB = linePoints[n+1]
+            let xDelta = ptB.x - ptA.x
+            let yDelta = ptB.y - ptA.y
+            if (xDelta == 0.0 && yDelta == 0.0) {
+                // Points must not be equal
+                continue
+            }
+            let u: Double = ((pt.x - ptA.x) * xDelta + (pt.y - ptA.y) * yDelta) / (xDelta * xDelta + yDelta * yDelta)
+            var ptClosest = MKMapPoint()
+            if (u < 0.0) {
+                ptClosest = ptA
+            } else if (u > 1.0) {
+                ptClosest = ptB
+            } else {
+                ptClosest = MKMapPointMake(ptA.x + u * xDelta, ptA.y + u * yDelta);
+            }
+            print("Tapped point is: \(MKCoordinateForMapPoint(ptClosest))")
+            
+            let minDistance: Double = 8
+            
+            if min(distance, MKMetersBetweenMapPoints(ptClosest, pt)) <= minDistance {
+                let coordinate = MKCoordinateForMapPoint(ptClosest)
+                
+                return CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+            }
+        }
+        
+        return nil
+    }
+
 }
 
 extension ViewController: MKMapViewDelegate {
@@ -188,6 +305,10 @@ extension ViewController: MKMapViewDelegate {
                 self?.isBlockingAutoZoom = false
             }
         }
+    }
+    
+    func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
+        // annotationをtapしたときよばれる
     }
 }
 
